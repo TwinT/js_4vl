@@ -1,5 +1,5 @@
 {
-  "name": "4vl",
+  "name": "@twint/4vl",
   "version": "1.0.0",
   "description": "Four-valued logic vectors",
   "main": "dist/index",
