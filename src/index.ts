@@ -675,6 +675,19 @@ export class Vector4vl {
     }
 
     /**
+     * Tests if the vector is all Z (high-impedance).
+     */
+    get isZ() : boolean {
+        if (this._bits == 0) return true;
+        const lastmask = this._lastmask;
+        const vechigh = (vec : Uint32Array) =>
+            vec.slice(0, vec.length-1).every(x => ~x == 0) && (vec[vec.length-1] & lastmask) == lastmask;
+        const veclow = (vec : Uint32Array) =>
+            vec.slice(0, vec.length-1).every(x => x == 0) && (vec[vec.length-1] & lastmask) == 0;
+        return vechigh(this._avec) && veclow(this._bvec);
+    }
+
+    /**
      * Tests if there is any defined (non-x, non-z) bit in the vector.
      */
     get isDefined() : boolean {
@@ -1456,7 +1469,8 @@ class Display4vlDec extends Display4vlWithRegex {
         return Vector4vl.fromNumber(BigInt(data), bits);
     }
     show(data) {
-        if (!data.isFullyDefined) return 'x';
+        if (data.isZ) return 'z';
+        if (!data.isFullyDefined) return 'x';        
         return data.toBigInt().toString();
     }
     size(bits) {
@@ -1483,7 +1497,8 @@ class Display4vlDec2c extends Display4vlWithRegex {
         return Vector4vl.fromNumber(BigInt(data), bits);
     }
     show(data) {
-        if (!data.isFullyDefined) return 'x';
+        if (data.isZ) return 'z';
+        if (!data.isFullyDefined) return 'x';        
         return data.toBigIntSigned().toString();
     }
     size(bits) {
