@@ -132,6 +132,24 @@ describe('parsing and printing', () => {
     jsc.property('negative number', jsc.nat, n =>
         -n == Vector4vl.fromNumber(-n).toNumberSigned());
 
+    // Regression: `1 << 31` is -2^31 in JS, so toNumberSigned() was wrong for
+    // negative values of exactly 31 bits (the widest the assertion allows).
+    // Every width the method accepts is checked against the BigInt result:
+    // all-ones (-1), most negative, most positive, and one random value.
+    jsc.property('signed number matches BigInt up to 31 bits', jsc.integer(1, 31), jsc.bool, (bits, neg) => {
+        const rnd = (neg ? '1' : '0') + _.times(bits - 1, () => _.sample(['0', '1'])).join('');
+        return ['1'.repeat(bits), '1' + '0'.repeat(bits - 1), '0' + '1'.repeat(bits - 1), rnd].every(bin => {
+            const v = Vector4vl.fromBin(bin);
+            return BigInt(v.toNumberSigned()) === v.toBigIntSigned();
+        });
+    });
+
+    it('toNumberSigned at the 31-bit boundary', () => {
+        expect(Vector4vl.fromBin('1'.repeat(31)).toNumberSigned()).toBe(-1);
+        expect(Vector4vl.fromBin('1' + '0'.repeat(30)).toNumberSigned()).toBe(-(2 ** 30));
+        expect(Vector4vl.fromBin('0' + '1'.repeat(30)).toNumberSigned()).toBe(2 ** 30 - 1);
+    });
+
     const ex = s => s == '' ? '0' : (s[0] == 'x' || s[0] == 'z') ? s[0] : '0';
 
     jsc.property('binary sized', binarytxt, jsc.nat(100), (s, n) =>

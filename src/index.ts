@@ -1143,7 +1143,10 @@ export class Vector4vl {
         assert(this._bits < 32, "Vector4vl.toNumberSigned() called on a too wide vector");
         assert(this._bits > 0, "Vector4vl.toNumberSigned() called on an empty vector");
         const sign = this.msb == 1;
-        return sign ? Number.parseInt(this.toHex(), 16) - (1 << this._bits)
+        // Math.pow, not `1 << bits`: for 31 bits that is -2^31 in int32
+        // arithmetic, which turned every negative 31-bit value into
+        // `unsigned + 2^31`.
+        return sign ? Number.parseInt(this.toHex(), 16) - Math.pow(2, this._bits)
                     : Number.parseInt(this.toHex(), 16);
     }
 
